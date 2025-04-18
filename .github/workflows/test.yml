@@ -48,6 +48,18 @@ jobs:
           yarn upgrade typescript@5.0
           yarn --frozen-lockfile
           yarn type-validate
+  validate-legacy-node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 10.x
+          cache: "yarn"
+      # Remove `devDependencies` from `package.json` to avoid `yarn install` compatibility error
+      - run: node -e "const content = require('./package.json');delete content.devDependencies;require('fs').writeFileSync('package.json', JSON.stringify(content, null, 2));"
+      - run: yarn install --production --frozen-lockfile
   basic:
     runs-on: ubuntu-latest
     steps:
@@ -61,24 +73,6 @@ jobs:
       - run: yarn link --frozen-lockfile || true
       - run: yarn link webpack --frozen-lockfile
       - run: yarn test:basic --ci
-      - uses: codecov/codecov-action@v5
-        with:
-          flags: basic
-          functionalities: gcov
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-  validate-legacy-node:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 10.x
-          cache: "yarn"
-      # Remove `devDependencies` from `package.json` to avoid `yarn install` compatibility error
-      - run: node -e "const content = require('./package.json');delete content.devDependencies;require('fs').writeFileSync('package.json', JSON.stringify(content, null, 2));"
-      - run: yarn install --production --frozen-lockfile
   unit:
     runs-on: ubuntu-latest
     steps:
@@ -100,7 +94,6 @@ jobs:
       - uses: codecov/codecov-action@v5
         with:
           flags: unit
-          functionalities: gcov
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   integration:
@@ -191,6 +184,5 @@ jobs:
       - uses: codecov/codecov-action@v5
         with:
           flags: integration
-          functionalities: gcov
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
